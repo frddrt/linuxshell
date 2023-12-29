@@ -1,0 +1,49 @@
+#!/bin/bash
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+readonly CONFIG="/opt/backup/config.txt"
+readonly DATE="$(date '+%Y-%m-%d')"
+readonly HOUR="$(date '+%H')"
+readonly CHOUR="$(date '+%k')"
+
+while read line
+do
+    array=($(echo $line | tr '|' '\n'))
+    ACTIVE=${array[0]}
+    SOURCE_DIR=${array[1]}
+    BACKUP_DIR=${array[2]}
+    FREQUENCY=${array[3]}
+    RETENTION=${array[4]}
+
+    if [ ! "$ACTIVE" == "A" ]
+    then
+        continue
+    fi
+
+    ITSRUN=$(( $CHOUR % $FREQUENCY ))
+
+    if [ ! $ITSRUN -eq 0 ]
+    then
+	continue
+    fi
+
+    DATETIME="$DATE"_"$HOUR"
+    LASTTIME="$(date '+%Y-%m-%d' -d "-$RETENTION day")"
+    BACKUP_PATH="${BACKUP_DIR}/${DATETIME}"
+    LATEST_LINK="${BACKUP_DIR}/latest"
+
+    mkdir -p "${BACKUP_DIR}"
+
+    rsync -av --delete \
+      "${SOURCE_DIR}/" \
+      --link-dest "${LATEST_LINK}" \
+      --exclude=".cache" \
+      "${BACKUP_PATH}"
+
+    rm -rf "${LATEST_LINK}"
+    ln -s "${BACKUP_PATH}" "${LATEST_LINK}"
+    rm -rf ${BACKUP_DIR}/${LASTTIME}_*
+done < $CONFIG
