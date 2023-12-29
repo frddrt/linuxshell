@@ -1,0 +1,3 @@
+T|SOURCE|DESTINATION|FREQUENCY (HOURS)|RETENTION (DAYS)
+A|/media/Files/|/backup/files|12|30
+I|/media/Images/|/backup/images|24|10
