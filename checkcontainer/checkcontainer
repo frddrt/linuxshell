@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+readonly CONTAINERS="./containers.txt"
+
+while read container
+do
+  if [ "$( /usr/bin/docker container inspect -f '{{.State.Running}}' $container )" = "false" ]; then
+    /usr/bin/docker start $container
+  fi
+done < $CONTAINERS
